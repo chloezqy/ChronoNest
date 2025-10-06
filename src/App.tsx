@@ -1,3 +1,126 @@
+// Utility for mock autopilot reordering and break insertion
+function getOptimizedTasks(tasks: Task[]): Task[] {
+  // Map string categories to union type
+  function mapCategory(cat: string): keyof typeof CATEGORIES {
+    if (cat === "Coursework") return "Coursework";
+    if (cat === "Meeting") return "Meeting";
+    if (cat === "Exercise") return "Exercise";
+    return "Rest";
+  }
+  const priorityOrder = { High: 0, Medium: 1, Low: 2 };
+  const energyOrder = { High: 0, Medium: 1, Low: 2 };
+  // Add more intelligent tasks and transitions
+  let enhancedTasks: Task[] = [
+    {
+      id: 101,
+      title: "Morning Jog",
+      category: "Exercise",
+      date: tasks[0].date,
+      startTime: "7:00 AM",
+      endTime: "7:45 AM",
+      notes: "Start with light cardio",
+      priority: "Medium",
+      focusLevel: "Medium",
+      time: "7:00 AM – 7:45 AM",
+      timeSlot: "07:00",
+      movedReason: "✨ Energize for the day"
+    },
+    {
+      id: 102,
+      title: "Breakfast & Planning",
+      category: "Rest",
+      date: tasks[0].date,
+      startTime: "7:45 AM",
+      endTime: "8:15 AM",
+      notes: "Healthy breakfast, review goals",
+      priority: "Low",
+      focusLevel: "Low",
+      time: "7:45 AM – 8:15 AM",
+      timeSlot: "07:45",
+      movedReason: "✨ Prep for productivity"
+    },
+    ...tasks.map(t => ({ ...t, category: mapCategory(t.category as string) })),
+    {
+      id: 103,
+      title: "Break (Recharge)",
+      category: "Rest",
+      date: tasks[0].date,
+      startTime: "2:30 PM",
+      endTime: "2:45 PM",
+      notes: "Step outside, hydrate",
+      priority: "Low",
+      focusLevel: "Low",
+      time: "2:30 PM – 2:45 PM",
+      timeSlot: "14:30",
+      movedReason: "✨ Scheduled recovery"
+    },
+    {
+      id: 104,
+      title: "Deep Work Block",
+      category: "Coursework",
+      date: tasks[0].date,
+      startTime: "2:45 PM",
+      endTime: "4:00 PM",
+      notes: "Focus on lab report",
+      priority: "High",
+      focusLevel: "High",
+      time: "2:45 PM – 4:00 PM",
+      timeSlot: "14:45",
+      movedReason: "✨ High-focus slot"
+    },
+    {
+      id: 105,
+      title: "Social Check-in",
+      category: "Meeting",
+      date: tasks[0].date,
+      startTime: "6:00 PM",
+      endTime: "6:30 PM",
+      notes: "Call family",
+      priority: "Low",
+      focusLevel: "Low",
+      time: "6:00 PM – 6:30 PM",
+      timeSlot: "18:00",
+      movedReason: "✨ Balance social energy"
+    }
+  ];
+  // Sort strictly by timeSlot (24-hour time)
+  let sorted = enhancedTasks.sort((a, b) => {
+    return (a.timeSlot ?? '').localeCompare(b.timeSlot ?? '');
+  });
+  // Insert a break after first two tasks if not present
+  if (!sorted.some(t => t.title.includes("Break"))) {
+    sorted.splice(2, 0, {
+      id: 999,
+      title: "Break (15 min Recharge)",
+      category: "Rest",
+      date: sorted[0].date,
+      startTime: "",
+      endTime: "",
+      notes: "Auto-Pilot scheduled recharge",
+      priority: "Low",
+      focusLevel: "Low",
+      time: "",
+      timeSlot: "",
+      movedReason: "✨ Added by Auto-Pilot"
+    });
+  }
+  return sorted;
+}
+type Task = {
+  id: number;
+  title: string;
+  category: keyof typeof CATEGORIES;
+  date: string;
+  startTime: string;
+  endTime: string;
+  notes: string;
+  priority: "Low" | "Medium" | "High";
+  focusLevel: "Low" | "Medium" | "High";
+  time?: string;
+  timeSlot?: string;
+  movedReason?: string;
+};
+import { motion, AnimatePresence } from "framer-motion";
 import React, { useState } from "react";
 import { Switch } from "./components/ui/switch";
 import { Progress } from "./components/ui/progress";
@@ -12,9 +135,9 @@ import svgPathsInactive from "./imports/svg-70l00ebgo1";
 import svgPathsCalendar from "./imports/svg-762yb2k5vl";
 import svgPathsAddTask from "./imports/svg-gnpkziqbrm";
 import svgPathsProfile from "./imports/svg-6s3e5bj6ga";
-import img1 from "figma:asset/a54c18dba35f0d40124c297b87639264f2aba83e.png";
-import imgImage16 from "figma:asset/f9c18f9f115194b6ed3f37bf11a8aa7c407f6353.png";
-import img21 from "figma:asset/ae2d980830128b28f07b3e32282b51954967533c.png";
+import img1 from "./assets/a54c18dba35f0d40124c297b87639264f2aba83e.png";
+import imgImage16 from "./assets/f9c18f9f115194b6ed3f37bf11a8aa7c407f6353.png";
+import img21 from "./assets/ae2d980830128b28f07b3e32282b51954967533c.png";
 
 // Category system with color coding
 const CATEGORIES = {
@@ -45,7 +168,7 @@ const CATEGORIES = {
 };
 
 // Helper function to get category styling
-const getCategoryStyle = (category) => {
+const getCategoryStyle = (category: keyof typeof CATEGORIES): typeof CATEGORIES["Coursework"] => {
   return CATEGORIES[category] || CATEGORIES.Coursework;
 };
 
@@ -186,8 +309,8 @@ const initialTasksData = [
 ];
 
 // Helper function to convert task data to display format
-const formatTasksForDisplay = (tasks) => {
-  return tasks.map(task => ({
+const formatTasksForDisplay = (tasks: Task[]): Task[] => {
+  return tasks.map((task: Task) => ({
     ...task,
     time: `${task.startTime} – ${task.endTime}`,
     timeSlot: convertTo24Hour(task.startTime)
@@ -195,21 +318,22 @@ const formatTasksForDisplay = (tasks) => {
 };
 
 // Helper function to convert 12-hour to 24-hour format for timeSlot
-const convertTo24Hour = (time12h) => {
+const convertTo24Hour = (time12h: string): string => {
   const [time, modifier] = time12h.split(' ');
   let [hours, minutes] = time.split(':');
-  if (hours === '12') {
-    hours = '00';
+  let hoursNum = parseInt(hours, 10);
+  if (hoursNum === 12) {
+    hoursNum = 0;
   }
   if (modifier === 'PM') {
-    hours = parseInt(hours, 10) + 12;
+    hoursNum += 12;
   }
-  return `${hours}:${minutes}`;
+  return `${hoursNum.toString().padStart(2, '0')}:${minutes}`;
 };
 
 // Helper function to group tasks by date
-const groupTasksByDate = (tasks) => {
-  return tasks.reduce((acc, task) => {
+const groupTasksByDate = (tasks: Task[]): Record<string, Task[]> => {
+  return tasks.reduce((acc: Record<string, Task[]>, task: Task) => {
     if (!acc[task.date]) {
       acc[task.date] = [];
     }
@@ -218,15 +342,19 @@ const groupTasksByDate = (tasks) => {
   }, {});
 };
 
-function UserProfileScreen({ isOpen, onClose }) {
+interface UserProfileScreenProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+function UserProfileScreen({ isOpen, onClose }: UserProfileScreenProps) {
   const [settings, setSettings] = useState({
     syncCalendar: false,
     energyInsights: true,
     darkMode: false
   });
 
-  const handleToggle = (setting) => {
-    setSettings(prev => ({ ...prev, [setting]: !prev[setting] }));
+  const handleToggle = (setting: keyof typeof settings) => {
+    setSettings((prev) => ({ ...prev, [setting]: !prev[setting] }));
   };
 
   if (!isOpen) return null;
@@ -371,44 +499,63 @@ function UserProfileScreen({ isOpen, onClose }) {
   );
 }
 
+interface TopBarProps {
+  focusEnabled: boolean;
+  autoPilotEnabled: boolean;
+  onFocusToggle: (enabled: boolean) => void;
+  onAutoPilotToggle: (enabled: boolean) => void;
+  onProfileClick: () => void;
+  showToggle?: boolean;
+}
 function TopBar({
   focusEnabled,
   autoPilotEnabled,
   onFocusToggle,
   onAutoPilotToggle,
   onProfileClick,
-}) {
+  showToggle = true,
+}: TopBarProps) {
+  // Gradient for Auto-Pilot ON
+  const autoPilotGradient = autoPilotEnabled
+    ? "bg-gradient-to-r from-teal-300 via-blue-200 to-[#CBB3E8] border-teal-300"
+    : "bg-gradient-to-r from-[#CBB3E8] via-[#B8E5D3] to-[#B8D8FF] border-white/20 backdrop-blur-md";
   return (
     <div className="relative top-0 left-0 right-0 bg-transparent z-20 max-w-md mx-auto">
-      <div className="flex items-center justify-between px-6 pt-8 pb-6">
-        {/* Focus vs Auto-Pilot Toggle */}
-        <div className="flex items-center bg-white/40 backdrop-blur-md rounded-full p-1 border border-white/20">
-          <button
-            onClick={() => onFocusToggle(true)}
-            className={`px-4 py-2 rounded-full transition-all ${
-              focusEnabled
-                ? "bg-white text-black shadow-sm"
-                : "text-gray-600"
-            }`}
+      <div className="flex items-center px-6 pt-8 pb-6">
+        {/* Focus vs Auto-Pilot Toggle - only show in active mode */}
+        {showToggle ? (
+          <motion.div
+            className={`flex items-center rounded-full p-1 border ${autoPilotGradient}`}
+            layout
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
           >
-            <span className="text-xs">Focus</span>
-          </button>
-          <button
-            onClick={() => onAutoPilotToggle(true)}
-            className={`px-4 py-2 rounded-full transition-all ${
-              autoPilotEnabled
-                ? "bg-white text-black shadow-sm"
-                : "text-gray-600"
-            }`}
-          >
-            <span className="text-xs">Auto-Pilot</span>
-          </button>
-        </div>
-
-        {/* Profile Image */}
+            <button
+              onClick={() => onFocusToggle(true)}
+              className={`px-4 py-2 rounded-full transition-all ${
+                focusEnabled
+                  ? "bg-white text-black shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              <span className="text-xs">Focus</span>
+            </button>
+            <button
+              onClick={() => onAutoPilotToggle(true)}
+              className={`px-4 py-2 rounded-full transition-all ${
+                autoPilotEnabled
+                  ? "bg-white text-black shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              <span className="text-xs">Auto-Pilot</span>
+            </button>
+          </motion.div>
+        ) : null}
+        <div className="flex-1" />
+        {/* Profile Image - always at top right */}
         <button 
           onClick={onProfileClick}
-          className="w-10 h-10 rounded-full overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+          className="w-10 h-10 rounded-full overflow-hidden shadow-md hover:shadow-lg transition-shadow ml-auto"
         >
           <img
             src={imgImage16}
@@ -421,7 +568,7 @@ function TopBar({
   );
 }
 
-function CharacterBlob() {
+function CharacterBlob(): React.ReactElement {
   return (
     <div className="flex justify-center mb-6">
       <div className="relative">
@@ -446,37 +593,32 @@ function CharacterBlob() {
   );
 }
 
-function TaskTracker() {
+function TaskTracker(): React.ReactElement {
   return (
     <div className="px-6 mb-8">
       <div className="flex gap-4">
         {/* Tasks Remaining Card */}
         <div className="flex-1 bg-pink-100/70 backdrop-blur-md rounded-2xl p-4 border border-white/20">
           <div className="text-3xl font-medium text-black mb-1">
-            2
+            5
           </div>
           <div className="text-xs text-black leading-tight">
-            Task
+            Tasks
             <br />
             Remaining
-          </div>
-          <div className="mt-2 h-1 bg-gray-200 rounded-full">
-            <div className="h-full w-3/4 bg-green-400 rounded-full"></div>
           </div>
         </div>
 
         {/* Completion Percentage Card */}
         <div className="flex-1 bg-purple-100/70 backdrop-blur-md rounded-2xl p-4 border border-white/20">
           <div className="text-3xl font-medium text-black mb-1">
-            76%
+            28%
           </div>
           <div className="text-xs text-black leading-tight">
-            task
-            <br />
             complete
           </div>
           <div className="mt-2 h-1 bg-gray-200 rounded-full">
-            <div className="h-full w-3/4 bg-green-400 rounded-full"></div>
+            <div className="h-full bg-green-400 rounded-full" style={{ width: "28%" }}></div>
           </div>
         </div>
       </div>
@@ -484,17 +626,27 @@ function TaskTracker() {
   );
 }
 
-function Schedule({ tasks, onScheduleClick }) {
+interface ScheduleProps {
+  tasks: Task[];
+  onScheduleClick: () => void;
+}
+function Schedule({ tasks, onScheduleClick }: ScheduleProps) {
+  // Use same time slots as expanded view for consistency
+  // Only show collapsed morning view: 8am-12pm
   const timeSlots = [
-    "11 am",
-    "12 am",
-    "1 pm",
-    "2 pm",
-    "3 pm",
-    "4 pm",
-    "5 pm",
-    "6 pm",
+    "8 am", "9 am", "10 am", "11 am", "12 pm"
   ];
+
+  // Helper to get tasks for a time slot
+  const getTasksForTimeSlot = (timeSlot: string): Task[] => {
+    const isPM = timeSlot.includes("pm");
+    const hour = parseInt(timeSlot);
+    const slotHour24 = isPM && hour !== 12 ? hour + 12 : hour === 12 && !isPM ? 0 : hour;
+    return tasks.filter((task: Task) => {
+      const [taskHour] = (task.timeSlot ?? "0:00").split(":").map(Number);
+      return taskHour === slotHour24;
+    });
+  };
 
   return (
     <div className="px-6 mb-8">
@@ -522,56 +674,54 @@ function Schedule({ tasks, onScheduleClick }) {
         <span className="text-sm text-gray-600">April 20</span>
       </div>
 
-      {/* Timeline */}
+      {/* Timeline with grouped tasks */}
       <div className="relative">
-        {/* Time slots */}
-        <div className="space-y-8">
-          {timeSlots.map((time, index) => (
-            <div key={time} className="flex items-center">
-              <span className="text-xs text-black w-12 flex-shrink-0">
-                {time}
-              </span>
-              <div className="flex-1 h-px bg-gray-200 ml-4"></div>
-            </div>
-          ))}
-        </div>
-
-        {/* Task Cards */}
-        <div className="absolute left-16 top-4">
-          {tasks.map((task, index) => {
-            const categoryStyle = getCategoryStyle(task.category);
-            return (
-              <div 
-                key={task.id} 
-                className={`${categoryStyle.bgClass} backdrop-blur-md rounded-lg p-3 mb-4 border border-white/20 w-48 relative`}
-                style={{ marginTop: index * 160 + 'px' }}
-              >
-                <div className="text-xs font-medium text-black mb-1">
-                  {task.title}
-                </div>
-                <div className="text-xs text-gray-600 mb-1">
-                  {task.time}
-                </div>
-                {task.notes && (
-                  <div className="text-xs text-gray-600">
-                    Notes: {task.notes}
-                  </div>
-                )}
-                <div className={`absolute left-0 top-0 bottom-0 w-0.5 rounded-full ${categoryStyle.borderClass}`}></div>
+        {timeSlots.map((timeSlot, index) => {
+          const tasksForSlot = getTasksForTimeSlot(timeSlot);
+          return (
+            <div key={timeSlot} className="flex items-start mb-8">
+              <span className="text-xs text-black w-12 flex-shrink-0 mt-1">{timeSlot}</span>
+              <div className="flex-1 ml-4">
+                <div className="h-px bg-gray-200"></div>
+                {/* Task cards for this time slot */}
+                {tasksForSlot.map((task: Task, taskIndex: number) => {
+                  const categoryStyle = getCategoryStyle(task.category);
+                  return (
+                    <div key={task.id} className={`mt-2 mb-4 ${categoryStyle.bgClass} backdrop-blur-md rounded-lg p-3 border border-white/20 w-48 relative`}>
+                      <div className="text-xs font-medium text-black mb-1">{task.title}</div>
+                      <div className="text-xs text-gray-600 mb-1">{task.time}</div>
+                      {task.notes && (
+                        <div className="text-xs text-gray-600">Notes: {task.notes}</div>
+                      )}
+                      <div className={`absolute left-0 top-0 bottom-0 w-0.5 rounded-full ${categoryStyle.borderClass}`}></div>
+                      {/* Moved reason pill for Auto-Pilot tasks */}
+                      {task.movedReason && (
+                        <div className="ml-2 px-4 py-2 rounded-2xl bg-white text-teal-900 text-sm font-semibold shadow-sm border border-teal-100/60 backdrop-blur-md">
+                          {task.movedReason}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
+interface BottomNavigationProps {
+  onAddTask: () => void;
+  currentMode: string;
+  onModeChange: (mode: string) => void;
+}
 function BottomNavigation({
   onAddTask,
   currentMode,
   onModeChange,
-}) {
+}: BottomNavigationProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-purple-100/80 via-pink-50/60 to-transparent z-20 max-w-md mx-auto">
       <div className="px-6 pb-8 pt-4">
@@ -644,7 +794,7 @@ function BottomNavigation({
 }
 
 // Inactive Mode Components
-function InactiveCharacterBlob() {
+function InactiveCharacterBlob(): React.ReactElement {
   return (
     <div className="flex justify-center mb-8">
       <div className="relative">
@@ -657,7 +807,7 @@ function InactiveCharacterBlob() {
         </div>
 
         {/* Main character blob with sad face */}
-        <div className="relative w-32 h-32 bg-purple-300 rounded-full flex items-center justify-center shadow-lg">
+        <div className="relative w-32 h-32 bg-purple-200 rounded-full flex items-center justify-center shadow-lg">
           <img
             src={img21}
             alt="Sad Character"
@@ -669,7 +819,7 @@ function InactiveCharacterBlob() {
   );
 }
 
-function EnergyChart() {
+function EnergyChart(): React.ReactElement {
   const chartData = [
     { hour: 0, energy: 85 },
     { hour: 4, energy: 75 },
@@ -766,7 +916,7 @@ function EnergyChart() {
   );
 }
 
-function DailyCategories() {
+function DailyCategories(): React.ReactElement {
   const categories = [
     {
       name: "Sleep",
@@ -834,37 +984,46 @@ function DailyCategories() {
   );
 }
 
+interface InactiveModeProps {
+  focusEnabled: boolean;
+  autoPilotEnabled: boolean;
+  onFocusToggle: (enabled: boolean) => void;
+  onAutoPilotToggle: (enabled: boolean) => void;
+  onProfileClick: () => void;
+}
 function InactiveMode({
   focusEnabled,
   autoPilotEnabled,
   onFocusToggle,
   onAutoPilotToggle,
   onProfileClick,
-}) {
+}: InactiveModeProps) {
   return (
     <>
-      {/* Fixed Top Bar */}
+      {/* Fixed Top Bar - header only, no toggle */}
       <TopBar
         focusEnabled={focusEnabled}
         autoPilotEnabled={autoPilotEnabled}
         onFocusToggle={onFocusToggle}
         onAutoPilotToggle={onAutoPilotToggle}
         onProfileClick={onProfileClick}
+        showToggle={false}
       />
-
       {/* Scrollable Main Content */}
       <div className="pt-6 pb-32 overflow-y-auto relative z-10">
         <InactiveCharacterBlob />
-
         <EnergyChart />
-
         <DailyCategories />
       </div>
     </>
   );
 }
 
-function ExpandedCalendarView({ onScheduleClick, groupedTasks }) {
+interface ExpandedCalendarViewProps {
+  onScheduleClick: () => void;
+  groupedTasks: Record<string, Task[]>;
+}
+function ExpandedCalendarView({ onScheduleClick, groupedTasks }: ExpandedCalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState("2025-04-20");
   const currentTasks = groupedTasks[selectedDate] || [];
 
@@ -885,19 +1044,19 @@ function ExpandedCalendarView({ onScheduleClick, groupedTasks }) {
     { date: 29, isCurrentMonth: true }, { date: 30, isCurrentMonth: true }
   ];
 
-  const handleDateClick = (date) => {
+  const handleDateClick = (date: number) => {
     const dateStr = `2025-04-${date.toString().padStart(2, '0')}`;
     setSelectedDate(dateStr);
   };
 
-  const getTasksForTimeSlot = (timeSlot) => {
+  const getTasksForTimeSlot = (timeSlot: string): Task[] => {
     // Convert timeSlot (like "8 am") → numeric hour 8 or 20
     const isPM = timeSlot.includes("pm");
     const hour = parseInt(timeSlot); // "8 am" -> 8
     const slotHour24 = isPM && hour !== 12 ? hour + 12 : hour === 12 && !isPM ? 0 : hour;
   
-    return currentTasks.filter(task => {
-      const [taskHour, taskMinute] = task.timeSlot.split(":").map(Number);
+    return currentTasks.filter((task: Task) => {
+      const [taskHour, taskMinute] = (task.timeSlot ?? "0:00").split(":").map(Number);
       return taskHour === slotHour24;
     });
   };
@@ -992,7 +1151,7 @@ function ExpandedCalendarView({ onScheduleClick, groupedTasks }) {
                   <div className="h-px bg-gray-200"></div>
                   
                   {/* Task cards for this time slot */}
-                  {tasksForSlot.map((task, taskIndex) => {
+                  {tasksForSlot.map((task: Task, taskIndex: number) => {
                     const categoryStyle = getCategoryStyle(task.category);
                     return (
                       <div key={task.id} className={`mt-2 mb-4 ${categoryStyle.bgClass} backdrop-blur-md rounded-lg p-3 border border-white/20 w-48 relative`}>
@@ -1015,7 +1174,12 @@ function ExpandedCalendarView({ onScheduleClick, groupedTasks }) {
   );
 }
 
-function AddTaskModal({ isOpen, onClose, onSave }) {
+interface AddTaskModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (task: Task) => void;
+}
+function AddTaskModal({ isOpen, onClose, onSave }: AddTaskModalProps) {
   const [formData, setFormData] = useState({
     title: "Start a new task...",
     category: "Coursework",
@@ -1030,24 +1194,23 @@ function AddTaskModal({ isOpen, onClose, onSave }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const categories = Object.keys(CATEGORIES);
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: keyof Task, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSave = () => {
-    const newTask = {
+    const mappedTask = {
       id: Date.now(),
       title: formData.title === "Start a new task..." ? `${formData.category} Task` : formData.title,
-      category: formData.category,
+      category: (formData.category === "Coursework" ? "Coursework" : formData.category === "Meeting" ? "Meeting" : formData.category === "Exercise" ? "Exercise" : "Rest") as keyof typeof CATEGORIES,
       date: formData.date,
       startTime: formatTimeForDisplay(formData.startTime),
       endTime: formatTimeForDisplay(formData.endTime),
       notes: formData.notes,
-      priority: formData.priority,
-      focusLevel: formData.focusLevel
+      priority: (formData.priority === "High" ? "High" : formData.priority === "Medium" ? "Medium" : "Low") as "Low" | "Medium" | "High",
+      focusLevel: (formData.focusLevel === "High" ? "High" : formData.focusLevel === "Medium" ? "Medium" : "Low") as "Low" | "Medium" | "High"
     };
-    
-    onSave(newTask);
+    onSave(mappedTask);
     setFormData({
       title: "Start a new task...",
       category: "Coursework",
@@ -1066,17 +1229,18 @@ function AddTaskModal({ isOpen, onClose, onSave }) {
     setIsEditingTitle(true);
   };
 
-  const handleTitleSubmit = (e) => {
-    if (e.key === 'Enter' || e.type === 'blur') {
+  const handleTitleSubmit = (e: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => {
+    if (("key" in e && e.key === "Enter") || e.type === "blur") {
       setIsEditingTitle(false);
     }
   };
 
-  const formatTimeForDisplay = (time24) => {
-    const [hours, minutes] = time24.split(':');
-    const hour12 = hours > 12 ? hours - 12 : hours === '00' ? 12 : hours;
-    const period = hours >= 12 ? 'PM' : 'AM';
-    return `${hour12}:${minutes} ${period}`;
+  const formatTimeForDisplay = (time24: string): string => {
+  const [hours, minutes] = time24.split(':');
+  const hoursNum = parseInt(hours, 10);
+  const hour12 = hoursNum > 12 ? hoursNum - 12 : hoursNum === 0 ? 12 : hoursNum;
+  const period = hoursNum >= 12 ? 'PM' : 'AM';
+  return `${hour12}:${minutes} ${period}`;
   };
 
   if (!isOpen) return null;
@@ -1129,7 +1293,8 @@ function AddTaskModal({ isOpen, onClose, onSave }) {
               <label className="block text-gray-600 mb-2">Category:</label>
               <div className="grid grid-cols-2 gap-3">
                 {categories.map(cat => {
-                  const categoryStyle = getCategoryStyle(cat);
+                  const mappedCat = (cat === "Coursework" ? "Coursework" : cat === "Meeting" ? "Meeting" : cat === "Exercise" ? "Exercise" : "Rest") as keyof typeof CATEGORIES;
+                  const categoryStyle = getCategoryStyle(mappedCat);
                   return (
                     <button
                       key={cat}
@@ -1269,6 +1434,15 @@ function AddTaskModal({ isOpen, onClose, onSave }) {
   );
 }
 
+interface ActiveModeProps {
+  focusEnabled: boolean;
+  autoPilotEnabled: boolean;
+  onFocusToggle: (enabled: boolean) => void;
+  onAutoPilotToggle: (enabled: boolean) => void;
+  onScheduleClick: () => void;
+  onProfileClick: () => void;
+  tasks: Task[];
+}
 function ActiveMode({
   focusEnabled,
   autoPilotEnabled,
@@ -1277,37 +1451,234 @@ function ActiveMode({
   onScheduleClick,
   onProfileClick,
   tasks,
-}) {
+}: ActiveModeProps) {
+  // Banner state
+  const [showBanner, setShowBanner] = useState(false);
+  const [showChartAnim, setShowChartAnim] = useState(false);
+  const [showOptimized, setShowOptimized] = useState(false);
+  const [animatedTasks, setAnimatedTasks] = useState<Task[]>(tasks);
+  const [postponedCount, setPostponedCount] = useState(0);
+  const [glowMap, setGlowMap] = useState<{[id:number]: boolean}>({});
+
+  React.useEffect(() => {
+    if (autoPilotEnabled) {
+      setShowBanner(true);
+      setShowChartAnim(true);
+      setShowOptimized(false);
+      // Animate chart and banner for 3s, then show optimized schedule
+      setTimeout(() => {
+        setShowBanner(false);
+        setShowChartAnim(false);
+        setShowOptimized(true);
+        // Use mock optimized logic
+        let rearranged = getOptimizedTasks(tasks);
+        let postponed = 0;
+        let displayTasks = rearranged;
+        if (rearranged.length > 6) {
+          postponed = rearranged.length - 6;
+          displayTasks = rearranged.slice(0, 6);
+        }
+        setAnimatedTasks(displayTasks);
+        setPostponedCount(postponed);
+        // Glow animation for moved tasks
+        const newGlow: {[id:number]: boolean} = {};
+        displayTasks.forEach(t => {
+          if (t.movedReason || t.id === 999) newGlow[t.id] = true;
+        });
+        setGlowMap(newGlow);
+        setTimeout(() => setGlowMap({}), 1200);
+      }, 3000);
+    } else {
+      setAnimatedTasks(tasks);
+      setPostponedCount(0);
+      setGlowMap({});
+      setShowBanner(false);
+      setShowChartAnim(false);
+      setShowOptimized(false);
+    }
+  }, [autoPilotEnabled, tasks]);
+
   return (
     <>
-      {/* Fixed Top Bar */}
+      {/* Fixed Top Bar - show toggle in active mode */}
       <TopBar
         focusEnabled={focusEnabled}
         autoPilotEnabled={autoPilotEnabled}
         onFocusToggle={onFocusToggle}
         onAutoPilotToggle={onAutoPilotToggle}
         onProfileClick={onProfileClick}
+        showToggle={true}
       />
-
+      {/* Animated overlay banner */}
+      {/* Banner now appears above the schedule, not fixed at top */}
+      <div className="px-6 mb-4">
+        <AnimatePresence>
+          {showBanner && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.7 }}
+              className="w-full flex justify-center"
+            >
+              <div className="px-6 py-3 rounded-2xl bg-white/70 backdrop-blur-md border border-teal-200/40 shadow-lg text-teal-900 font-semibold text-base flex items-center gap-2 animate-fade-in-out" style={{ boxShadow: '0 4px 24px 0 rgba(94, 234, 212, 0.12)' }}>
+                Auto-Pilot is optimizing your day… ✨
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
       {/* Scrollable Main Content */}
-      <div className="pt-6 pb-32 overflow-y-auto relative z-10">
-        <CharacterBlob />
-
-        <div className="text-center mb-8">
-          <h1 className="text-2xl text-black">
-            Almost Done, Andrew!
-          </h1>
+      <div className={`pt-6 pb-32 overflow-y-auto relative z-10 ${autoPilotEnabled ? 'bg-gradient-to-br from-teal-100 via-blue-50 to-purple-100' : ''}`}>
+        {/* Character blob always visible, glowing/stars only in Auto-Pilot */}
+        <div className="flex justify-center mb-6 relative">
+          <motion.div
+            className="relative"
+            animate={autoPilotEnabled && showChartAnim ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+            transition={autoPilotEnabled && showChartAnim ? { duration: 1.2, repeat: Infinity } : {}}
+          >
+            {/* Animated stars only in Auto-Pilot mode during chart animation */}
+            {autoPilotEnabled && showChartAnim && (
+              <>
+                <motion.div className="absolute -top-4 left-8" animate={{ opacity: [0.5, 1, 0.5], y: [0, -8, 0] }} transition={{ duration: 2, repeat: Infinity }}>
+                  <span className="text-yellow-300 text-xl">✨</span>
+                </motion.div>
+                <motion.div className="absolute top-2 right-2" animate={{ opacity: [0.5, 1, 0.5], y: [0, -6, 0] }} transition={{ duration: 2.2, repeat: Infinity }}>
+                  <span className="text-blue-300 text-lg">✦</span>
+                </motion.div>
+                <motion.div className="absolute bottom-2 left-4" animate={{ opacity: [0.5, 1, 0.5], y: [0, 6, 0] }} transition={{ duration: 2.4, repeat: Infinity }}>
+                  <span className="text-purple-300 text-lg">✧</span>
+                </motion.div>
+              </>
+            )}
+            {/* Main character blob, glowing only in Auto-Pilot mode during chart animation */}
+            <motion.div
+              className="relative w-32 h-32 bg-purple-300 rounded-full flex items-center justify-center shadow-lg"
+              animate={autoPilotEnabled && showChartAnim ? { boxShadow: ["0 0 0px #5eead4", "0 0 24px #5eead4", "0 0 0px #5eead4"] } : {}}
+              transition={autoPilotEnabled && showChartAnim ? { duration: 1.2, repeat: Infinity } : {}}
+            >
+              <img src={img1} alt="Character" className="w-28 h-28 object-cover rounded-full" />
+            </motion.div>
+          </motion.div>
         </div>
-
-        <TaskTracker />
-
-        <Schedule tasks={tasks} onScheduleClick={onScheduleClick} />
+        {/* Energy chart only in Auto-Pilot mode */}
+        {autoPilotEnabled && (
+          <div className="px-6 mb-8">
+            <motion.div
+              className="relative h-32 bg-white/5 rounded-lg p-4 backdrop-blur-sm border border-white/10"
+              animate={showChartAnim ? { y: [0, -6, 0] } : { y: 0 }}
+              transition={showChartAnim ? { duration: 2, repeat: Infinity } : {}}
+            >
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 280 96">
+                <defs>
+                  <linearGradient id="energyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#5eead4" stopOpacity="0.6" />
+                    <stop offset="100%" stopColor="#CBB3E8" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                {/* Animated wave path */}
+                <motion.path
+                  d="M0 24 Q70 10 140 52 Q210 94 280 76 L280 96 L0 96 Z"
+                  fill="url(#energyGradient)"
+                  animate={showChartAnim ? { d: [
+                    "M0 24 Q70 10 140 52 Q210 94 280 76 L280 96 L0 96 Z",
+                    "M0 14 Q70 20 140 52 Q210 58 280 76 L280 96 L0 96 Z",
+                    "M0 24 Q70 10 140 52 Q210 94 280 76 L280 96 L0 96 Z"
+                  ] } : {}}
+                  transition={showChartAnim ? { duration: 2, repeat: Infinity } : {}}
+                />
+                {/* Chart line */}
+                <motion.path
+                  d="M0 24 Q70 10 140 52 Q210 94 280 76"
+                  stroke="#5eead4"
+                  strokeWidth="2"
+                  fill="none"
+                  strokeLinecap="round"
+                  animate={showChartAnim ? { d: [
+                    "M0 24 Q70 10 140 52 Q210 94 280 76",
+                    "M0 14 Q70 20 140 52 Q210 58 280 76",
+                    "M0 24 Q70 10 140 52 Q210 94 280 76"
+                  ] } : {}}
+                  transition={showChartAnim ? { duration: 2, repeat: Infinity } : {}}
+                />
+                {/* Data point */}
+                <circle cx="280" cy="76" r="4" fill="#5eead4" />
+              </svg>
+              {/* Chart labels */}
+              <div className="absolute -bottom-6 left-4 text-xs text-teal-500">Hour 0</div>
+              <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-teal-500">Hour 12</div>
+              <div className="absolute -bottom-6 right-4 text-xs text-teal-500">Hour 24</div>
+              <div className="absolute -left-0 top-0 text-xs text-teal-500">100%</div>
+              <div className="absolute -left-0 top-1/2 transform -translate-y-1/2 text-xs text-teal-500">50%</div>
+              <div className="absolute -left-0 bottom-0 text-xs text-teal-500">0%</div>
+              <div className="absolute -left-0 top-1/4 transform -translate-y-1/2 text-xs text-teal-500">75%</div>
+            </motion.div>
+          </div>
+        )}
+        {/* Animated Task List and postponed message only for Auto-Pilot */}
+        {autoPilotEnabled && showOptimized && (
+          <>
+            <div className="px-6 mb-8">
+              <AnimatePresence>
+                {animatedTasks.map((task: Task, idx: number) => (
+                  <motion.div
+                    key={task.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.5 }}
+                    className={`mb-4 ${getCategoryStyle(task.category).bgClass} backdrop-blur-md rounded-lg p-4 border border-white/20 w-full relative flex items-center ${glowMap[task.id] ? 'ring-4 ring-teal-200 ring-opacity-60 animate-pulse' : ''}`}
+                  >
+                    <div className="flex-1">
+                      <div className="text-xs font-medium text-black mb-1">{task.title}</div>
+                      <div className="text-xs text-gray-600 mb-1">{task.time}</div>
+                      {task.notes && (
+                        <div className="text-xs text-gray-600">Notes: {task.notes}</div>
+                      )}
+                    </div>
+                    {/* Glowing indicator for moved reason */}
+                    {task.movedReason && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.5 }}
+                        className="ml-2 px-4 py-2 rounded-2xl bg-gradient-to-r from-teal-100 via-purple-100 to-blue-100 text-teal-900 text-sm font-semibold shadow-sm border border-teal-100/60 backdrop-blur-md animate-pulse"
+                      >
+                        {task.movedReason}
+                      </motion.div>
+                    )}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+            {/* Postponed message */}
+            {postponedCount > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.7 }}
+                className="fixed bottom-24 left-0 right-0 z-30 flex justify-center"
+              >
+                <div className="px-6 py-3 rounded-2xl bg-gradient-to-r from-blue-100 via-teal-100 to-purple-100 shadow-lg text-blue-900 font-semibold text-base flex items-center gap-2">
+                  1 task postponed to tomorrow for recovery balance.
+                </div>
+              </motion.div>
+            )}
+          </>
+        )}
+        {/* Focus mode: show manual schedule only */}
+        {!autoPilotEnabled && (
+          <>
+            <TaskTracker />
+            <Schedule tasks={tasks} onScheduleClick={onScheduleClick} />
+          </>
+        )}
       </div>
     </>
   );
 }
 
-export default function App() {
+export default function App(): React.ReactElement {
   const [focusEnabled, setFocusEnabled] = useState(true);
   const [autoPilotEnabled, setAutoPilotEnabled] = useState(false);
   const [currentMode, setCurrentMode] = useState("active"); // 'active', 'inactive', or 'calendar'
@@ -1315,57 +1686,66 @@ export default function App() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [allTasks, setAllTasks] = useState(initialTasksData);
 
-  const handleAddTask = () => {
+  const handleAddTask = (): void => {
     setIsAddTaskModalOpen(true);
   };
 
-  const handleCloseAddTask = () => {
+  const handleCloseAddTask = (): void => {
     setIsAddTaskModalOpen(false);
   };
 
-  const handleSaveTask = (newTask) => {
+  const handleSaveTask = (newTask: Task): void => {
     setAllTasks(prev => [...prev, newTask]);
     console.log("New task added:", newTask);
   };
 
   // Get tasks formatted for display
-  const formattedTasks = formatTasksForDisplay(allTasks);
+  // Map allTasks category to union type
+  const formattedTasks = formatTasksForDisplay(
+    allTasks.map(t => ({
+      ...t,
+      category: (t.category === "Coursework" ? "Coursework" : t.category === "Meeting" ? "Meeting" : t.category === "Exercise" ? "Exercise" : "Rest") as keyof typeof CATEGORIES,
+      priority: (t.priority === "High" ? "High" : t.priority === "Medium" ? "Medium" : "Low") as "Low" | "Medium" | "High",
+      focusLevel: (t.focusLevel === "High" ? "High" : t.focusLevel === "Medium" ? "Medium" : "Low") as "Low" | "Medium" | "High"
+    })
+  )
+  );
   const groupedTasks = groupTasksByDate(formattedTasks);
 
-  const handleFocusToggle = (enabled) => {
+  const handleFocusToggle = (enabled: boolean): void => {
     setFocusEnabled(enabled);
     setAutoPilotEnabled(!enabled);
   };
 
-  const handleAutoPilotToggle = (enabled) => {
+  const handleAutoPilotToggle = (enabled: boolean): void => {
     setAutoPilotEnabled(enabled);
     setFocusEnabled(!enabled);
   };
 
-  const handleModeChange = (mode) => {
+  const handleModeChange = (mode: string): void => {
     setCurrentMode(mode);
   };
 
-  const handleScheduleClick = () => {
+  const handleScheduleClick = (): void => {
     setCurrentMode(currentMode === "calendar" ? "active" : "calendar");
   };
 
-  const handleProfileClick = () => {
+  const handleProfileClick = (): void => {
     setIsProfileOpen(true);
   };
 
-  const handleCloseProfile = () => {
+  const handleCloseProfile = (): void => {
     setIsProfileOpen(false);
   };
 
-  const getBackgroundGradient = () => {
+  const getBackgroundGradient = (): string => {
     if (currentMode === "active" || currentMode === "calendar") {
       return "bg-gradient-to-br from-purple-100 via-pink-50 to-blue-50";
     }
     return "bg-gradient-to-br from-gray-800 via-slate-800 to-indigo-900";
   };
 
-  const getBackgroundElements = () => {
+  const getBackgroundElements = (): React.ReactElement => {
     if (currentMode === "active" || currentMode === "calendar") {
       return (
         <>
@@ -1384,7 +1764,7 @@ export default function App() {
     );
   };
 
-  const renderCurrentView = () => {
+  const renderCurrentView = (): React.ReactElement | null => {
     switch (currentMode) {
       case "active":
         return (
@@ -1395,7 +1775,7 @@ export default function App() {
             onAutoPilotToggle={handleAutoPilotToggle}
             onScheduleClick={handleScheduleClick}
             onProfileClick={handleProfileClick}
-            tasks={formattedTasks.filter(t => t.date === "2025-04-20").slice(0, 2)}
+            tasks={formattedTasks.filter((t: Task) => t.date === "2025-04-20")}
           />
         );
       case "inactive":
