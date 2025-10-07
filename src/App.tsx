@@ -369,7 +369,7 @@ function UserProfileScreen({ isOpen, onClose }: UserProfileScreenProps) {
   
         <div className="relative max-w-md mx-auto h-full overflow-y-auto">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 pt-12 pb-6">
+          <div className="flex items-center justify-between px-6 pt-8 pb-6">
             <button 
               onClick={onClose}
               className="flex items-center gap-2 text-black hover:opacity-80 transition-opacity"
@@ -401,23 +401,23 @@ function UserProfileScreen({ isOpen, onClose }: UserProfileScreenProps) {
           </div>
   
           {/* Quick Actions */}
-          <div className="px-6 mb-8">
+          <div className="px-6 mb-4">
             <div className="flex gap-4">
               <button className="flex-1 bg-white/60 backdrop-blur-md rounded-[30px] border border-white/20 shadow-sm hover:bg-white/80 transition-all flex items-center justify-center py-3">
-                <span className="text-black text-sm font-medium">Edit Profile</span>
+                <span className="text-black font-medium">Edit Profile</span>
               </button>
               <button className="flex-1 bg-white/60 backdrop-blur-md rounded-[30px] border border-white/20 shadow-sm hover:bg-white/80 transition-all flex items-center justify-center py-3">
-                <span className="text-black text-sm font-medium">Settings</span>
+                <span className="text-black font-medium">Settings</span>
               </button>
             </div>
           </div>
   
           {/* Energy Summary Card */}
-          <div className="px-6 mb-8">
+          <div className="px-6 mb-4">
             <div className="bg-white/60 backdrop-blur-md rounded-[30px] p-4 border border-white/20 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg text-black mb-1">Weekly Energy</h3>
+                  <h3 className="text-black font-medium mb-1">Weekly Energy</h3>
                   <p className="text-sm text-gray-600">Average this week</p>
                 </div>
                 <div className="text-right">
@@ -434,7 +434,7 @@ function UserProfileScreen({ isOpen, onClose }: UserProfileScreenProps) {
             <div className="bg-white/60 backdrop-blur-md rounded-[30px] p-4 border border-white/20 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-black mb-1">Sync with Google Calendar</h4>
+                  <h4 className="text-black mb-1 font-medium">Sync with Google Calendar</h4>
                   <p className="text-xs text-gray-600">Import events automatically</p>
                 </div>
                 <Switch 
@@ -448,26 +448,12 @@ function UserProfileScreen({ isOpen, onClose }: UserProfileScreenProps) {
             <div className="bg-white/60 backdrop-blur-md rounded-[30px] p-4 border border-white/20 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-black mb-1">Energy Insights</h4>
+                  <h4 className="text-black mb-1 font-medium">Energy Insights</h4>
                   <p className="text-xs text-gray-600">Track your daily energy levels</p>
                 </div>
                 <Switch 
                   checked={settings.energyInsights}
                   onCheckedChange={() => handleToggle('energyInsights')}
-                />
-              </div>
-            </div>
-  
-            {/* Dark Mode */}
-            <div className="bg-white/60 backdrop-blur-md rounded-[30px] p-4 border border-white/20 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-black mb-1">Dark Mode</h4>
-                  <p className="text-xs text-gray-600">Switch to dark theme</p>
-                </div>
-                <Switch 
-                  checked={settings.darkMode}
-                  onCheckedChange={() => handleToggle('darkMode')}
                 />
               </div>
             </div>
@@ -1458,36 +1444,41 @@ function ActiveMode({
   const [showOptimized, setShowOptimized] = useState(false);
   const [animatedTasks, setAnimatedTasks] = useState<Task[]>(tasks);
   const [postponedCount, setPostponedCount] = useState(0);
-  const [glowMap, setGlowMap] = useState<{[id:number]: boolean}>({});
+  const [glowMap, setGlowMap] = useState<{ [id: number]: boolean }>({});
 
   React.useEffect(() => {
     if (autoPilotEnabled) {
       setShowBanner(true);
       setShowChartAnim(true);
       setShowOptimized(false);
-      // Animate chart and banner for 3s, then show optimized schedule
-      setTimeout(() => {
+
+      const bannerTimer = setTimeout(() => {
         setShowBanner(false);
-        setShowChartAnim(false);
-        setShowOptimized(true);
-        // Use mock optimized logic
-        let rearranged = getOptimizedTasks(tasks);
-        let postponed = 0;
-        let displayTasks = rearranged;
-        if (rearranged.length > 6) {
-          postponed = rearranged.length - 6;
-          displayTasks = rearranged.slice(0, 6);
-        }
-        setAnimatedTasks(displayTasks);
-        setPostponedCount(postponed);
-        // Glow animation for moved tasks
-        const newGlow: {[id:number]: boolean} = {};
-        displayTasks.forEach(t => {
-          if (t.movedReason || t.id === 999) newGlow[t.id] = true;
-        });
-        setGlowMap(newGlow);
-        setTimeout(() => setGlowMap({}), 1200);
-      }, 3000);
+
+        const transitionTimer = setTimeout(() => {
+          setShowChartAnim(false);
+          setShowOptimized(true);
+
+          let rearranged = getOptimizedTasks(tasks);
+          let postponed = 0;
+          let displayTasks = rearranged;
+          if (rearranged.length > 6) {
+            postponed = rearranged.length - 6;
+            displayTasks = rearranged.slice(0, 6);
+          }
+          setAnimatedTasks(displayTasks);
+          setPostponedCount(postponed);
+
+          const newGlow: { [id: number]: boolean } = {};
+          displayTasks.forEach((t) => {
+            if (t.movedReason || t.id === 999) newGlow[t.id] = true;
+          });
+          setGlowMap(newGlow);
+          setTimeout(() => setGlowMap({}), 1200);
+        }, 500);
+      }, 2500);
+
+      return () => clearTimeout(bannerTimer);
     } else {
       setAnimatedTasks(tasks);
       setPostponedCount(0);
@@ -1500,7 +1491,6 @@ function ActiveMode({
 
   return (
     <>
-      {/* Fixed Top Bar - show toggle in active mode */}
       <TopBar
         focusEnabled={focusEnabled}
         autoPilotEnabled={autoPilotEnabled}
@@ -1509,8 +1499,7 @@ function ActiveMode({
         onProfileClick={onProfileClick}
         showToggle={true}
       />
-      {/* Animated overlay banner */}
-      {/* Banner now appears above the schedule, not fixed at top */}
+
       <div className="px-6 mb-4">
         <AnimatePresence>
           {showBanner && (
@@ -1521,122 +1510,229 @@ function ActiveMode({
               transition={{ duration: 0.7 }}
               className="w-full flex justify-center"
             >
-              <div className="px-6 py-3 rounded-2xl bg-white/70 backdrop-blur-md border border-teal-200/40 shadow-lg text-teal-900 font-semibold text-base flex items-center gap-2 animate-fade-in-out" style={{ boxShadow: '0 4px 24px 0 rgba(94, 234, 212, 0.12)' }}>
+              <div
+                className="px-6 py-3 rounded-2xl bg-white/70 backdrop-blur-md border border-teal-200/40 shadow-lg text-teal-900 font-semibold text-base flex items-center gap-2 animate-fade-in-out"
+                style={{ boxShadow: '0 4px 24px 0 rgba(94, 234, 212, 0.12)' }}
+              >
                 Auto-Pilot is optimizing your day… ✨
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
-      {/* Scrollable Main Content */}
-      <div className={`pt-6 pb-32 overflow-y-auto relative z-10 ${autoPilotEnabled ? 'bg-gradient-to-br from-teal-100 via-blue-50 to-purple-100' : ''}`}>
-        {/* Character blob always visible, glowing/stars only in Auto-Pilot */}
+
+      {/* ✨ Wrapped Scrollable Main Content for smooth upward animation */}
+      <motion.div
+        className={`pt-6 pb-32 overflow-y-auto relative z-10 ${
+          autoPilotEnabled
+            ? 'bg-gradient-to-br from-teal-100 via-blue-50 to-purple-100'
+            : ''
+        }`}
+        initial={{ y: 0, opacity: 1 }}
+        animate={
+          autoPilotEnabled && showOptimized
+            ? { y: -25, transition: { duration: 1.2, ease: 'easeOut' } }
+            : { y: 0, transition: { duration: 0.8, ease: 'easeOut' } }
+        }
+      >
+        {/* Character blob */}
         <div className="flex justify-center mb-6 relative">
           <motion.div
             className="relative"
-            animate={autoPilotEnabled && showChartAnim ? { scale: [1, 1.08, 1] } : { scale: 1 }}
-            transition={autoPilotEnabled && showChartAnim ? { duration: 1.2, repeat: Infinity } : {}}
+            animate={
+              autoPilotEnabled && showChartAnim
+                ? { scale: [1, 1.08, 1] }
+                : { scale: 1 }
+            }
+            transition={
+              autoPilotEnabled && showChartAnim
+                ? { duration: 1.2, repeat: Infinity }
+                : {}
+            }
           >
-            {/* Animated stars only in Auto-Pilot mode during chart animation */}
             {autoPilotEnabled && showChartAnim && (
               <>
-                <motion.div className="absolute -top-4 left-8" animate={{ opacity: [0.5, 1, 0.5], y: [0, -8, 0] }} transition={{ duration: 2, repeat: Infinity }}>
+                <motion.div
+                  className="absolute -top-4 left-8"
+                  animate={{ opacity: [0.5, 1, 0.5], y: [0, -8, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
                   <span className="text-yellow-300 text-xl">✨</span>
                 </motion.div>
-                <motion.div className="absolute top-2 right-2" animate={{ opacity: [0.5, 1, 0.5], y: [0, -6, 0] }} transition={{ duration: 2.2, repeat: Infinity }}>
+                <motion.div
+                  className="absolute top-2 right-2"
+                  animate={{ opacity: [0.5, 1, 0.5], y: [0, -6, 0] }}
+                  transition={{ duration: 2.2, repeat: Infinity }}
+                >
                   <span className="text-blue-300 text-lg">✦</span>
                 </motion.div>
-                <motion.div className="absolute bottom-2 left-4" animate={{ opacity: [0.5, 1, 0.5], y: [0, 6, 0] }} transition={{ duration: 2.4, repeat: Infinity }}>
+                <motion.div
+                  className="absolute bottom-2 left-4"
+                  animate={{ opacity: [0.5, 1, 0.5], y: [0, 6, 0] }}
+                  transition={{ duration: 2.4, repeat: Infinity }}
+                >
                   <span className="text-purple-300 text-lg">✧</span>
                 </motion.div>
               </>
             )}
-            {/* Main character blob, glowing only in Auto-Pilot mode during chart animation */}
             <motion.div
               className="relative w-32 h-32 bg-purple-300 rounded-full flex items-center justify-center shadow-lg"
-              animate={autoPilotEnabled && showChartAnim ? { boxShadow: ["0 0 0px #5eead4", "0 0 24px #5eead4", "0 0 0px #5eead4"] } : {}}
-              transition={autoPilotEnabled && showChartAnim ? { duration: 1.2, repeat: Infinity } : {}}
+              animate={
+                autoPilotEnabled && showChartAnim
+                  ? {
+                      boxShadow: [
+                        '0 0 0px #5eead4',
+                        '0 0 24px #5eead4',
+                        '0 0 0px #5eead4',
+                      ],
+                    }
+                  : {}
+              }
+              transition={
+                autoPilotEnabled && showChartAnim
+                  ? { duration: 1.2, repeat: Infinity }
+                  : {}
+              }
             >
-              <img src={img1} alt="Character" className="w-28 h-28 object-cover rounded-full" />
+              <img
+                src={img1}
+                alt="Character"
+                className="w-28 h-28 object-cover rounded-full"
+              />
             </motion.div>
           </motion.div>
         </div>
-        {/* Energy chart only in Auto-Pilot mode */}
+
+        {/* Energy chart */}
         {autoPilotEnabled && (
-          <div className="px-6 mb-8">
+          <motion.div
+            className="px-6 mb-8"
+            initial={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
             <motion.div
               className="relative h-32 bg-white/5 rounded-lg p-4 backdrop-blur-sm border border-white/10"
               animate={showChartAnim ? { y: [0, -6, 0] } : { y: 0 }}
-              transition={showChartAnim ? { duration: 2, repeat: Infinity } : {}}
+              transition={
+                showChartAnim ? { duration: 2, repeat: Infinity } : {}
+              }
             >
               <svg className="absolute inset-0 w-full h-full" viewBox="0 0 280 96">
                 <defs>
-                  <linearGradient id="energyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <linearGradient
+                    id="energyGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="0%"
+                    y2="100%"
+                  >
                     <stop offset="0%" stopColor="#5eead4" stopOpacity="0.6" />
                     <stop offset="100%" stopColor="#CBB3E8" stopOpacity="0" />
                   </linearGradient>
                 </defs>
-                {/* Animated wave path */}
                 <motion.path
                   d="M0 24 Q70 10 140 52 Q210 94 280 76 L280 96 L0 96 Z"
                   fill="url(#energyGradient)"
-                  animate={showChartAnim ? { d: [
-                    "M0 24 Q70 10 140 52 Q210 94 280 76 L280 96 L0 96 Z",
-                    "M0 14 Q70 20 140 52 Q210 58 280 76 L280 96 L0 96 Z",
-                    "M0 24 Q70 10 140 52 Q210 94 280 76 L280 96 L0 96 Z"
-                  ] } : {}}
-                  transition={showChartAnim ? { duration: 2, repeat: Infinity } : {}}
+                  animate={
+                    showChartAnim
+                      ? {
+                          d: [
+                            'M0 24 Q70 10 140 52 Q210 94 280 76 L280 96 L0 96 Z',
+                            'M0 14 Q70 20 140 52 Q210 58 280 76 L280 96 L0 96 Z',
+                            'M0 24 Q70 10 140 52 Q210 94 280 76 L280 96 L0 96 Z',
+                          ],
+                        }
+                      : {}
+                  }
+                  transition={
+                    showChartAnim ? { duration: 2, repeat: Infinity } : {}
+                  }
                 />
-                {/* Chart line */}
                 <motion.path
                   d="M0 24 Q70 10 140 52 Q210 94 280 76"
                   stroke="#5eead4"
                   strokeWidth="2"
                   fill="none"
                   strokeLinecap="round"
-                  animate={showChartAnim ? { d: [
-                    "M0 24 Q70 10 140 52 Q210 94 280 76",
-                    "M0 14 Q70 20 140 52 Q210 58 280 76",
-                    "M0 24 Q70 10 140 52 Q210 94 280 76"
-                  ] } : {}}
-                  transition={showChartAnim ? { duration: 2, repeat: Infinity } : {}}
+                  animate={
+                    showChartAnim
+                      ? {
+                          d: [
+                            'M0 24 Q70 10 140 52 Q210 94 280 76',
+                            'M0 14 Q70 20 140 52 Q210 58 280 76',
+                            'M0 24 Q70 10 140 52 Q210 94 280 76',
+                          ],
+                        }
+                      : {}
+                  }
+                  transition={
+                    showChartAnim ? { duration: 2, repeat: Infinity } : {}
+                  }
                 />
-                {/* Data point */}
                 <circle cx="280" cy="76" r="4" fill="#5eead4" />
               </svg>
-              {/* Chart labels */}
-              <div className="absolute -bottom-6 left-4 text-xs text-teal-500">Hour 0</div>
-              <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-teal-500">Hour 12</div>
-              <div className="absolute -bottom-6 right-4 text-xs text-teal-500">Hour 24</div>
-              <div className="absolute -left-0 top-0 text-xs text-teal-500">100%</div>
-              <div className="absolute -left-0 top-1/2 transform -translate-y-1/2 text-xs text-teal-500">50%</div>
-              <div className="absolute -left-0 bottom-0 text-xs text-teal-500">0%</div>
-              <div className="absolute -left-0 top-1/4 transform -translate-y-1/2 text-xs text-teal-500">75%</div>
+              <div className="absolute -bottom-6 left-4 text-xs text-teal-500">
+                Hour 0
+              </div>
+              <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-teal-500">
+                Hour 12
+              </div>
+              <div className="absolute -bottom-6 right-4 text-xs text-teal-500">
+                Hour 24
+              </div>
+              <div className="absolute -left-0 top-0 text-xs text-teal-500">
+                100%
+              </div>
+              <div className="absolute -left-0 top-1/2 transform -translate-y-1/2 text-xs text-teal-500">
+                50%
+              </div>
+              <div className="absolute -left-0 bottom-0 text-xs text-teal-500">
+                0%
+              </div>
+              <div className="absolute -left-0 top-1/4 transform -translate-y-1/2 text-xs text-teal-500">
+                75%
+              </div>
             </motion.div>
-          </div>
+          </motion.div>
         )}
-        {/* Animated Task List and postponed message only for Auto-Pilot */}
+
+        {/* Animated Task List */}
         {autoPilotEnabled && showOptimized && (
-          <>
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+          >
             <div className="px-6 mb-8">
               <AnimatePresence>
                 {animatedTasks.map((task: Task, idx: number) => (
                   <motion.div
                     key={task.id}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.5 }}
-                    className={`mb-4 ${getCategoryStyle(task.category).bgClass} backdrop-blur-md rounded-lg p-4 border border-white/20 w-full relative flex items-center ${glowMap[task.id] ? 'ring-4 ring-teal-200 ring-opacity-60 animate-pulse' : ''}`}
+                    transition={{ duration: 0.5, delay: idx * 0.05 }}
+                    className={`mb-4 ${
+                      getCategoryStyle(task.category).bgClass
+                    } backdrop-blur-md rounded-lg p-4 border border-white/20 w-full relative flex items-center ${
+                      glowMap[task.id]
+                        ? 'ring-4 ring-teal-200 ring-opacity-60 animate-pulse'
+                        : ''
+                    }`}
                   >
                     <div className="flex-1">
-                      <div className="text-xs font-medium text-black mb-1">{task.title}</div>
-                      <div className="text-xs text-gray-600 mb-1">{task.time}</div>
+                      <div className="text-xs font-medium text-black mb-1">
+                        {task.title}
+                      </div>
+                      <div className="text-xs text-gray-600 mb-1">
+                        {task.time}
+                      </div>
                       {task.notes && (
-                        <div className="text-xs text-gray-600">Notes: {task.notes}</div>
+                        <div className="text-xs text-gray-600">
+                          Notes: {task.notes}
+                        </div>
                       )}
                     </div>
-                    {/* Glowing indicator for moved reason */}
                     {task.movedReason && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.8 }}
@@ -1651,7 +1747,7 @@ function ActiveMode({
                 ))}
               </AnimatePresence>
             </div>
-            {/* Postponed message */}
+
             {postponedCount > 0 && (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -1664,16 +1760,16 @@ function ActiveMode({
                 </div>
               </motion.div>
             )}
-          </>
+          </motion.div>
         )}
-        {/* Focus mode: show manual schedule only */}
+
         {!autoPilotEnabled && (
           <>
             <TaskTracker />
             <Schedule tasks={tasks} onScheduleClick={onScheduleClick} />
           </>
         )}
-      </div>
+      </motion.div>
     </>
   );
 }
