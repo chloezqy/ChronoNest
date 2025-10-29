@@ -18,3 +18,8 @@ It helps students and knowledge workers plan days that balance diligence and rec
 
 * UI/UX design in **Figma**.
 * Built with **React + TailwindCSS** with help of **Figma Make**.
+
+## About the Creator
+
+Created by [Chloe Zhu](https://www.chloezhuqy.com) April 2025, idea initiated at FigBuild 2025 by a four-person team.
+For more: visit [Project Page](https://www.chloezhuqy.com/works/chrononest).

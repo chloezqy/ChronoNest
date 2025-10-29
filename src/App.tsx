@@ -377,7 +377,7 @@ function UserProfileScreen({ isOpen, onClose }: UserProfileScreenProps) {
   
           {/* Profile Avatar */}
           <div className="flex justify-center mb-6">
-            <div className="w-24 h-24 rounded-full overflow-hidden shadow-lg">
+            <div className="w-12 h-12 rounded-full overflow-hidden shadow-lg">
               <img src={img_profile} alt="Profile" className="w-full h-full object-cover" />
             </div>
           </div>
@@ -490,9 +490,7 @@ function TopBar({
   showToggle = true,
 }: TopBarProps) {
   // Gradient for Auto-Pilot ON
-  const autoPilotGradient = autoPilotEnabled
-    ? "bg-gradient-to-r from-teal-300 via-blue-200 to-[#CBB3E8] border-teal-300"
-    : "bg-gradient-to-r from-[#CBB3E8] via-[#B8E5D3] to-[#B8D8FF] border-white/20 backdrop-blur-md";
+  const autoPilotGradient = "bg-white/40 border-white/20 backdrop-blur-md";
   return (
     <div className="relative top-0 left-0 right-0 bg-transparent z-20 max-w-md mx-auto">
       <div className="flex items-center px-6 pt-8 pb-6">
@@ -529,7 +527,7 @@ function TopBar({
         {/* Profile Image - always at top right */}
         <button 
           onClick={onProfileClick}
-          className="w-10 h-10 rounded-full overflow-hidden shadow-md hover:shadow-lg transition-shadow ml-auto"
+          className="w-12 h-12 rounded-full overflow-hidden shadow-md hover:shadow-lg transition-shadow ml-auto"
         >
           <img
             src={img_profile}
@@ -667,14 +665,14 @@ function BottomNavigation({
             {/* Active Button */}
             <button
               onClick={() => onModeChange("active")}
-              className={`rounded-full px-5 py-2 transition-all ${
+              className={`rounded-full px-6 py-4 transition-all ${
                 currentMode === "active"
                   ? "bg-pink-200/80 shadow-sm"
                   : "hover:bg-white/20"
               }`}
             >
               <span
-                className={`text-sm ${
+                className={`text-base ${
                   currentMode === "active"
                     ? "text-black"
                     : "text-gray-500"
@@ -687,7 +685,7 @@ function BottomNavigation({
             {/* Add Button */}
             <button
               onClick={onAddTask}
-              className="bg-purple-500 rounded-full p-4 shadow-lg hover:bg-purple-600 transition-colors"
+              className="bg-purple-300 rounded-full p-4 shadow-lg"
             >
               <svg
                 className="w-6 h-6 text-white"
@@ -698,7 +696,7 @@ function BottomNavigation({
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
+                  strokeWidth={3}
                   d="M12 4v16m8-8H4"
                 />
               </svg>
@@ -707,14 +705,14 @@ function BottomNavigation({
             {/* Inactive Button */}
             <button
               onClick={() => onModeChange("inactive")}
-              className={`rounded-full px-5 py-2 transition-all ${
+              className={`rounded-full px-6 py-4 transition-all ${
                 currentMode === "inactive"
                   ? "bg-pink-200/80 shadow-sm"
                   : "hover:bg-white/20"
               }`}
             >
               <span
-                className={`text-sm ${
+                className={`text-base ${
                   currentMode === "inactive"
                     ? "text-black"
                     : "text-gray-500"
@@ -744,16 +742,6 @@ function InactiveCharacterBlob(): React.ReactElement {
 }
 
 function EnergyChart(): React.ReactElement {
-  const chartData = [
-    { hour: 0, energy: 85 },
-    { hour: 4, energy: 75 },
-    { hour: 8, energy: 45 },
-    { hour: 12, energy: 40 },
-    { hour: 16, energy: 35 },
-    { hour: 20, energy: 25 },
-    { hour: 24, energy: 20 },
-  ];
-
   return (
     <div className="px-6 mb-8">
       <h3 className="text-lg text-white/70 mb-4">
@@ -1449,10 +1437,9 @@ function ActiveMode({
               className="w-full flex justify-center"
             >
               <div
-                className="px-6 py-3 rounded-2xl bg-white/70 backdrop-blur-md border border-teal-200/40 shadow-lg text-teal-900 font-semibold text-base flex items-center gap-2 animate-fade-in-out"
-                style={{ boxShadow: '0 4px 24px 0 rgba(94, 234, 212, 0.12)' }}
+                className="px-6 py-3 rounded-2xl bg-white/0 text-teal-900 font-semibold text-base flex items-center gap-2 animate-fade-in-out"
               >
-                Auto-Pilot is optimizing your day… ✨
+                Auto-Pilot is optimizing your day...
               </div>
             </motion.div>
           )}
@@ -1467,24 +1454,24 @@ function ActiveMode({
             : ''
         }`}
         initial={{ y: 0, opacity: 1 }}
-        animate={
-          autoPilotEnabled && showOptimized
-            ? { y: -25, transition: { duration: 1.2, ease: 'easeOut' } }
-            : { y: 0, transition: { duration: 0.8, ease: 'easeOut' } }
-        }
+        animate={{
+          y: 0,
+          opacity: 1,
+          transition: { duration: 0.8, ease: 'easeOut' },
+        }}
       >
         {/* Character blob */}
-        <div className="flex justify-center mb-6 relative">
+        <div className={`flex justify-center relative ${!autoPilotEnabled ? "mb-6" : ""}`}>
           <motion.div
             className="relative flex items-center justify-center"
             animate={
               autoPilotEnabled && showChartAnim
-                ? { scale: [1, 1.08, 1] }
+                ? { scale: [1, 1.05, 1] }
                 : { scale: 1 }
             }
             transition={
               autoPilotEnabled && showChartAnim
-                ? { duration: 1.2, repeat: Infinity, ease: 'easeInOut' }
+                ? { duration: 2, repeat: Infinity, ease: 'easeInOut' }
                 : {}
             }
           >
@@ -1524,46 +1511,73 @@ function ActiveMode({
                     <stop offset="100%" stopColor="#CBB3E8" stopOpacity="0" />
                   </linearGradient>
                 </defs>
+                {/* ✨ Dynamic flowing energy curve */}
                 <motion.path
-                  d="M0 24 Q70 10 140 52 Q210 94 280 76 L280 96 L0 96 Z"
+                  d="M0,40 C40,20 80,10 120,40 S200,85 280,70 L280,96 L0,96 Z"
                   fill="url(#energyGradient)"
                   animate={
                     showChartAnim
                       ? {
                           d: [
-                            'M0 24 Q70 10 140 52 Q210 94 280 76 L280 96 L0 96 Z',
-                            'M0 14 Q70 20 140 52 Q210 58 280 76 L280 96 L0 96 Z',
-                            'M0 24 Q70 10 140 52 Q210 94 280 76 L280 96 L0 96 Z',
+                            'M0,40 C40,20 80,10 120,40 S200,85 280,70 L280,96 L0,96 Z',
+                            'M0,36 C40,15 80,5 120,36 S200,90 280,68 L280,96 L0,96 Z',
+                            'M0,44 C40,25 80,18 120,44 S200,80 280,72 L280,96 L0,96 Z',
+                            'M0,40 C40,20 80,10 120,40 S200,85 280,70 L280,96 L0,96 Z'
                           ],
                         }
                       : {}
                   }
                   transition={
-                    showChartAnim ? { duration: 2, repeat: Infinity } : {}
+                    showChartAnim
+                      ? { duration: 3, ease: 'easeInOut', repeat: Infinity }
+                      : {}
                   }
                 />
+
                 <motion.path
-                  d="M0 24 Q70 10 140 52 Q210 94 280 76"
+                  d="M0,40 C40,20 80,10 120,40 S200,85 280,70"
                   stroke="#5eead4"
-                  strokeWidth="2"
+                  strokeWidth="2.8"
                   fill="none"
                   strokeLinecap="round"
                   animate={
                     showChartAnim
                       ? {
                           d: [
-                            'M0 24 Q70 10 140 52 Q210 94 280 76',
-                            'M0 14 Q70 20 140 52 Q210 58 280 76',
-                            'M0 24 Q70 10 140 52 Q210 94 280 76',
+                            'M0,40 C40,20 80,10 120,40 S200,85 280,70',
+                            'M0,36 C40,15 80,5 120,36 S200,90 280,68',
+                            'M0,44 C40,25 80,18 120,44 S200,80 280,72',
+                            'M0,40 C40,20 80,10 120,40 S200,85 280,70'
                           ],
                         }
                       : {}
                   }
                   transition={
-                    showChartAnim ? { duration: 2, repeat: Infinity } : {}
+                    showChartAnim
+                      ? { duration: 3, ease: 'easeInOut', repeat: Infinity }
+                      : {}
                   }
                 />
-                <circle cx="280" cy="76" r="4" fill="#5eead4" />
+
+                {/* ✨ End circle stays attached to line tip */}
+                <motion.circle
+                  cx="280"
+                  cy="70"
+                  r="5"
+                  fill="#5eead4"
+                  animate={
+                    showChartAnim
+                      ? {
+                          cy: [70, 68, 72, 70], // sync with curve peak
+                        }
+                      : {}
+                  }
+                  transition={
+                    showChartAnim
+                      ? { duration: 4.5, ease: 'easeInOut', repeat: Infinity }
+                      : {}
+                  }
+                />
               </svg>
               <div className="absolute -bottom-6 left-4 text-xs text-teal-500">
                 Hour 0
@@ -1574,7 +1588,7 @@ function ActiveMode({
               <div className="absolute -bottom-6 right-4 text-xs text-teal-500">
                 Hour 24
               </div>
-              <div className="absolute -left-0 top-0 text-xs text-teal-500">
+              {/* <div className="absolute -left-0 top-0 text-xs text-teal-500">
                 100%
               </div>
               <div className="absolute -left-0 top-1/2 transform -translate-y-1/2 text-xs text-teal-500">
@@ -1585,10 +1599,12 @@ function ActiveMode({
               </div>
               <div className="absolute -left-0 top-1/4 transform -translate-y-1/2 text-xs text-teal-500">
                 75%
-              </div>
+              </div> */}
             </motion.div>
           </motion.div>
         )}
+
+        {autoPilotEnabled && <div className="h-8"></div>}
 
         {/* Animated Task List */}
         {autoPilotEnabled && showOptimized && (
