@@ -123,21 +123,9 @@ type Task = {
 import { motion, AnimatePresence } from "framer-motion";
 import React, { useState } from "react";
 import { Switch } from "./components/ui/switch";
-import { Progress } from "./components/ui/progress";
-import { Button } from "./components/ui/button";
-import { Input } from "./components/ui/input";
-import { Textarea } from "./components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select";
-import { RadioGroup, RadioGroupItem } from "./components/ui/radio-group";
-import { Label } from "./components/ui/label";
-import svgPaths from "./imports/svg-1wxayqubgo";
-import svgPathsInactive from "./imports/svg-70l00ebgo1";
-import svgPathsCalendar from "./imports/svg-762yb2k5vl";
-import svgPathsAddTask from "./imports/svg-gnpkziqbrm";
-import svgPathsProfile from "./imports/svg-6s3e5bj6ga";
-import img1 from "./assets/a54c18dba35f0d40124c297b87639264f2aba83e.png";
-import imgImage16 from "./assets/f9c18f9f115194b6ed3f37bf11a8aa7c407f6353.png";
-import img21 from "./assets/ae2d980830128b28f07b3e32282b51954967533c.png";
+import img_chrono_active from "./assets/chrono_active.png";
+import img_profile from "./assets/profile.png";
+import img_chrono_inactive from "./assets/chrono_inactive.png";
 
 // Category system with color coding
 const CATEGORIES = {
@@ -361,7 +349,7 @@ function UserProfileScreen({ isOpen, onClose }: UserProfileScreenProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-      <div className="relative w-full max-w-md mx-auto h-full bg-gradient-to-br from-purple-100 via-pink-50 to-blue-50 overflow-hidden shadow-2xl">
+      <div className="relative w-full max-w-md mx-auto h-full bg-gradient-to-br from-purple-100/80 via-pink-50 to-blue-50 overflow-hidden shadow-2xl">
         {/* Background decorative elements */}
         <div className="absolute top-20 -right-10 w-60 h-60 bg-purple-200 opacity-20 rounded-full blur-3xl"></div>
         <div className="absolute top-40 -left-10 w-40 h-40 bg-blue-200 opacity-20 rounded-full blur-2xl"></div>
@@ -390,7 +378,7 @@ function UserProfileScreen({ isOpen, onClose }: UserProfileScreenProps) {
           {/* Profile Avatar */}
           <div className="flex justify-center mb-6">
             <div className="w-24 h-24 rounded-full overflow-hidden shadow-lg">
-              <img src={imgImage16} alt="Profile" className="w-full h-full object-cover" />
+              <img src={img_profile} alt="Profile" className="w-full h-full object-cover" />
             </div>
           </div>
   
@@ -544,7 +532,7 @@ function TopBar({
           className="w-10 h-10 rounded-full overflow-hidden shadow-md hover:shadow-lg transition-shadow ml-auto"
         >
           <img
-            src={imgImage16}
+            src={img_profile}
             alt="Profile"
             className="w-full h-full object-cover"
           />
@@ -554,54 +542,26 @@ function TopBar({
   );
 }
 
-function CharacterBlob(): React.ReactElement {
-  return (
-    <div className="flex justify-center mb-6">
-      <div className="relative">
-        {/* Background blur circles */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-40 h-40 bg-purple-300 opacity-20 rounded-full blur-lg"></div>
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center scale-110">
-          <div className="w-32 h-32 bg-blue-300 opacity-20 rounded-full blur-lg"></div>
-        </div>
-
-        {/* Main character blob */}
-        <div className="relative w-32 h-32 bg-purple-300 rounded-full flex items-center justify-center shadow-lg">
-          <img
-            src={img1}
-            alt="Character"
-            className="w-28 h-28 object-cover rounded-full"
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function TaskTracker(): React.ReactElement {
   return (
-    <div className="px-6 mb-8">
+    <div className="px-6 mb-6">
       <div className="flex gap-4">
         {/* Tasks Remaining Card */}
         <div className="flex-1 bg-pink-100/70 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-          <div className="text-3xl font-medium text-black mb-1">
-            5
+          <div className="flex justify-between">
+            <span className="text-4xl font-bold text-black">5</span>
+            <span className="text-sm text-gray-700">Tasks <br />Remaining</span>
           </div>
-          <div className="text-xs text-black leading-tight">
-            Tasks
-            <br />
-            Remaining
+          <div className="mt-2 h-1 bg-gray-200 rounded-full">
+            <div className="h-full bg-green-400 rounded-full" style={{ width: "28%" }}></div>
           </div>
         </div>
 
         {/* Completion Percentage Card */}
         <div className="flex-1 bg-purple-100/70 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-          <div className="text-3xl font-medium text-black mb-1">
-            28%
-          </div>
-          <div className="text-xs text-black leading-tight">
-            complete
+          <div className="flex justify-between">
+            <span className="text-4xl font-bold text-black">28%</span>
+            <span className="text-sm text-gray-700">Tasks <br />Completed</span>
           </div>
           <div className="mt-2 h-1 bg-gray-200 rounded-full">
             <div className="h-full bg-green-400 rounded-full" style={{ width: "28%" }}></div>
@@ -635,64 +595,55 @@ function Schedule({ tasks, onScheduleClick }: ScheduleProps) {
   };
 
   return (
-    <div className="px-6 mb-8">
-      {/* Schedule Header */}
-      <div className="flex items-center justify-between mb-6">
-        <button 
-          onClick={onScheduleClick}
-          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-        >
-          <h2 className="text-2xl text-black">Schedule</h2>
-          <svg
-            className="w-6 h-6 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+    <div className="px-6 mb-6">
+      {/* Frosted glass schedule container */}
+      <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-sm">
+        {/* Schedule Header */}
+        <div className="flex items-center justify-between mb-6">
+          <button 
+            onClick={onScheduleClick}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </button>
-        <span className="text-sm text-gray-600">April 20</span>
-      </div>
-
-      {/* Timeline with grouped tasks */}
-      <div className="relative">
-        {timeSlots.map((timeSlot, index) => {
-          const tasksForSlot = getTasksForTimeSlot(timeSlot);
-          return (
-            <div key={timeSlot} className="flex items-start mb-8">
-              <span className="text-xs text-black w-12 flex-shrink-0 mt-1">{timeSlot}</span>
-              <div className="flex-1 ml-4">
-                <div className="h-px bg-gray-200"></div>
-                {/* Task cards for this time slot */}
-                {tasksForSlot.map((task: Task, taskIndex: number) => {
-                  const categoryStyle = getCategoryStyle(task.category);
-                  return (
-                    <div key={task.id} className={`mt-2 mb-4 ${categoryStyle.bgClass} backdrop-blur-md rounded-lg p-3 border border-white/20 w-48 relative`}>
-                      <div className="text-xs font-medium text-black mb-1">{task.title}</div>
-                      <div className="text-xs text-gray-600 mb-1">{task.time}</div>
-                      {task.notes && (
-                        <div className="text-xs text-gray-600">Notes: {task.notes}</div>
-                      )}
-                      <div className={`absolute left-0 top-0 bottom-0 w-0.5 rounded-full ${categoryStyle.borderClass}`}></div>
-                      {/* Moved reason pill for Auto-Pilot tasks */}
-                      {task.movedReason && (
-                        <div className="ml-2 px-4 py-2 rounded-2xl bg-white text-teal-900 text-sm font-semibold shadow-sm border border-teal-100/60 backdrop-blur-md">
-                          {task.movedReason}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+            <h2 className="text-2xl text-black font-semibold">Schedule</h2>
+            <svg
+              className="w-6 h-6 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <span className="text-sm text-gray-600">April 20</span>
+        </div>
+        {/* Timeline + Tasks */}
+        <div className="relative">
+          {timeSlots.map((timeSlot) => {
+            const tasksForSlot = getTasksForTimeSlot(timeSlot);
+            return (
+              <div key={timeSlot} className="flex items-start mb-8">
+                <span className="text-xs text-black w-12 flex-shrink-0 mt-1">{timeSlot}</span>
+                <div className="flex-1 ml-4">
+                  <div className="h-px bg-gray-200"></div>
+                  {tasksForSlot.map((task: Task) => {
+                    const categoryStyle = getCategoryStyle(task.category);
+                    return (
+                      <div
+                        key={task.id}
+                        className={`${categoryStyle.bgClass} backdrop-blur-md rounded-lg p-3 border border-white/20 w-[85%] mt-2 relative`}
+                      >
+                        <div className="text-xs font-medium text-black mb-1">{task.title}</div>
+                        <div className="text-xs text-gray-600 mb-1">{task.time}</div>
+                        {task.notes && <div className="text-xs text-gray-600">Notes: {task.notes}</div>}
+                        <div className={`absolute left-0 top-0 bottom-0 w-0.5 rounded-full ${categoryStyle.borderClass}`}></div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -783,24 +734,11 @@ function BottomNavigation({
 function InactiveCharacterBlob(): React.ReactElement {
   return (
     <div className="flex justify-center mb-8">
-      <div className="relative">
-        {/* Background blur circles */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-40 h-40 bg-purple-400 opacity-30 rounded-full blur-xl"></div>
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center scale-110">
-          <div className="w-32 h-32 bg-blue-400 opacity-20 rounded-full blur-lg"></div>
-        </div>
-
-        {/* Main character blob with sad face */}
-        <div className="relative w-32 h-32 bg-purple-200 rounded-full flex items-center justify-center shadow-lg">
-          <img
-            src={img21}
-            alt="Sad Character"
-            className="w-28 h-28 object-cover rounded-full"
-          />
-        </div>
-      </div>
+      <img
+        src={img_chrono_inactive}
+        alt="Inactive Character"
+        className="w-40 h-40 object-cover rounded-full"
+      />
     </div>
   );
 }
@@ -1069,7 +1007,7 @@ function ExpandedCalendarView({ onScheduleClick, groupedTasks }: ExpandedCalenda
             onClick={() => {}} // We'll handle this in the main component
             className="w-12 h-12 rounded-full overflow-hidden shadow-md hover:shadow-lg transition-shadow"
           >
-            <img src={imgImage16} alt="Profile" className="w-full h-full object-cover" />
+            <img src={img_profile} alt="Profile" className="w-full h-full object-cover" />
           </button>
         </div>
       </div>
@@ -1140,7 +1078,7 @@ function ExpandedCalendarView({ onScheduleClick, groupedTasks }: ExpandedCalenda
                   {tasksForSlot.map((task: Task, taskIndex: number) => {
                     const categoryStyle = getCategoryStyle(task.category);
                     return (
-                      <div key={task.id} className={`mt-2 mb-4 ${categoryStyle.bgClass} backdrop-blur-md rounded-lg p-3 border border-white/20 w-48 relative`}>
+                      <div key={task.id} className={`mt-2 mb-4 ${categoryStyle.bgClass} backdrop-blur-md rounded-lg p-3 border border-white/20 w-[85%] relative`}>
                         <div className="text-xs text-black mb-1">{task.title}</div>
                         <div className="text-xs text-gray-600 mb-1">{task.time}</div>
                         {task.notes && (
@@ -1237,11 +1175,11 @@ function AddTaskModal({ isOpen, onClose, onSave }: AddTaskModalProps) {
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
       
       {/* Modal */}
-      <div className="relative w-full max-w-md mx-auto bg-gradient-to-br from-purple-100 via-pink-50 to-blue-50 rounded-t-[40px] transform transition-transform duration-300 ease-out translate-y-0">
+      <div className="relative w-full max-w-md mx-auto bg-gradient-to-br from-purple-100/80 via-pink-50 to-blue-50 rounded-t-[40px] transform transition-transform duration-300 ease-out translate-y-0">
         {/* Background decorative elements */}
         <div className="absolute top-10 -right-8 w-32 h-32 bg-purple-200 opacity-20 rounded-full blur-2xl"></div>
         <div className="absolute top-20 -left-8 w-24 h-24 bg-blue-200 opacity-20 rounded-full blur-xl"></div>
-        
+        <div className="absolute bottom-10 -right-8 w-32 h-32 bg-pink-200 opacity-20 rounded-full blur-2xl"></div>
         <div className="relative p-6 pb-8 max-h-[85vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -1523,7 +1461,7 @@ function ActiveMode({
 
       {/* ✨ Wrapped Scrollable Main Content for smooth upward animation */}
       <motion.div
-        className={`pt-6 pb-32 overflow-y-auto relative z-10 ${
+        className={`pb-32 overflow-y-auto relative z-10 ${
           autoPilotEnabled
             ? 'bg-gradient-to-br from-teal-100 via-blue-50 to-purple-100'
             : ''
@@ -1538,7 +1476,7 @@ function ActiveMode({
         {/* Character blob */}
         <div className="flex justify-center mb-6 relative">
           <motion.div
-            className="relative"
+            className="relative flex items-center justify-center"
             animate={
               autoPilotEnabled && showChartAnim
                 ? { scale: [1, 1.08, 1] }
@@ -1546,60 +1484,15 @@ function ActiveMode({
             }
             transition={
               autoPilotEnabled && showChartAnim
-                ? { duration: 1.2, repeat: Infinity }
+                ? { duration: 1.2, repeat: Infinity, ease: 'easeInOut' }
                 : {}
             }
           >
-            {autoPilotEnabled && showChartAnim && (
-              <>
-                <motion.div
-                  className="absolute -top-4 left-8"
-                  animate={{ opacity: [0.5, 1, 0.5], y: [0, -8, 0] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  <span className="text-yellow-300 text-xl">✨</span>
-                </motion.div>
-                <motion.div
-                  className="absolute top-2 right-2"
-                  animate={{ opacity: [0.5, 1, 0.5], y: [0, -6, 0] }}
-                  transition={{ duration: 2.2, repeat: Infinity }}
-                >
-                  <span className="text-blue-300 text-lg">✦</span>
-                </motion.div>
-                <motion.div
-                  className="absolute bottom-2 left-4"
-                  animate={{ opacity: [0.5, 1, 0.5], y: [0, 6, 0] }}
-                  transition={{ duration: 2.4, repeat: Infinity }}
-                >
-                  <span className="text-purple-300 text-lg">✧</span>
-                </motion.div>
-              </>
-            )}
-            <motion.div
-              className="relative w-32 h-32 bg-purple-300 rounded-full flex items-center justify-center shadow-lg"
-              animate={
-                autoPilotEnabled && showChartAnim
-                  ? {
-                      boxShadow: [
-                        '0 0 0px #5eead4',
-                        '0 0 24px #5eead4',
-                        '0 0 0px #5eead4',
-                      ],
-                    }
-                  : {}
-              }
-              transition={
-                autoPilotEnabled && showChartAnim
-                  ? { duration: 1.2, repeat: Infinity }
-                  : {}
-              }
-            >
-              <img
-                src={img1}
-                alt="Character"
-                className="w-28 h-28 object-cover rounded-full"
-              />
-            </motion.div>
+            <img
+              src={img_chrono_active}
+              alt="Character"
+              className="w-40 h-40 object-cover rounded-full"
+            />
           </motion.div>
         </div>
 
@@ -1836,28 +1729,9 @@ export default function App(): React.ReactElement {
 
   const getBackgroundGradient = (): string => {
     if (currentMode === "active" || currentMode === "calendar") {
-      return "bg-gradient-to-br from-purple-100 via-pink-50 to-blue-50";
+      return "bg-gradient-to-br from-purple-100/80 via-pink-50 to-blue-50";
     }
     return "bg-gradient-to-br from-gray-800 via-slate-800 to-indigo-900";
-  };
-
-  const getBackgroundElements = (): React.ReactElement => {
-    if (currentMode === "active" || currentMode === "calendar") {
-      return (
-        <>
-          <div className="absolute top-20 -right-10 w-60 h-60 bg-purple-200 opacity-20 rounded-full blur-3xl"></div>
-          <div className="absolute top-40 -left-10 w-40 h-40 bg-blue-200 opacity-20 rounded-full blur-2xl"></div>
-          <div className="absolute bottom-40 right-10 w-32 h-32 bg-pink-200 opacity-20 rounded-full blur-xl"></div>
-        </>
-      );
-    }
-    return (
-      <>
-        <div className="absolute top-20 -right-10 w-60 h-60 bg-purple-400 opacity-20 rounded-full blur-3xl"></div>
-        <div className="absolute top-40 -left-10 w-40 h-40 bg-blue-400 opacity-20 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-40 right-10 w-32 h-32 bg-pink-400 opacity-20 rounded-full blur-xl"></div>
-      </>
-    );
   };
 
   const renderCurrentView = (): React.ReactElement | null => {
@@ -1893,9 +1767,6 @@ export default function App(): React.ReactElement {
 
   return (
     <div className={`min-h-screen max-w-md mx-auto relative ${getBackgroundGradient()}`}>
-      {/* Background decorative elements */}
-      {getBackgroundElements()}
-
       {/* Render current view */}
       {renderCurrentView()}
 
